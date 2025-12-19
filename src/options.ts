@@ -1,78 +1,77 @@
-import { NudgeSettings, NudgeStats, DEFAULT_SETTINGS, DEFAULT_STATS } from './constants/types';
+/**
+ * Nudge Options Page
+ * Settings dashboard for user configuration
+ */
+
+import {
+  NudgeSettings,
+  NudgeStats,
+  Theme,
+  DEFAULT_SETTINGS,
+  DEFAULT_STATS,
+  STORAGE_KEYS,
+} from './types';
+import { parseDomain, resolveTheme } from './utils';
+
+/** Export data structure */
+interface ExportData {
+  version: string;
+  exportedAt: string;
+  settings: NudgeSettings;
+  stats: NudgeStats;
+}
 
 class OptionsPage {
-  private settings: NudgeSettings = DEFAULT_SETTINGS;
-  private stats: NudgeStats = DEFAULT_STATS;
+  private settings: NudgeSettings = { ...DEFAULT_SETTINGS };
+  private stats: NudgeStats = { ...DEFAULT_STATS };
 
   constructor() {
     this.init();
   }
 
   private async init(): Promise<void> {
-    await this.loadSettings();
-    await this.loadStats();
-    this.setupEventListeners();
+    await this.loadData();
     this.applyTheme();
-    this.renderUI();
+    this.render();
+    this.setupEventListeners();
+    this.listenForChanges();
   }
 
-  private async loadSettings(): Promise<void> {
-    try {
-      const result = await chrome.storage.sync.get('settings');
-      if (result.settings) {
-        this.settings = { ...DEFAULT_SETTINGS, ...result.settings };
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
+  private async loadData(): Promise<void> {
+    const [settingsResult, statsResult] = await Promise.all([
+      chrome.storage.sync.get(STORAGE_KEYS.SETTINGS),
+      chrome.storage.sync.get(STORAGE_KEYS.STATS),
+    ]);
+
+    if (settingsResult[STORAGE_KEYS.SETTINGS]) {
+      this.settings = { ...DEFAULT_SETTINGS, ...settingsResult[STORAGE_KEYS.SETTINGS] };
     }
-  }
 
-  private async loadStats(): Promise<void> {
-    try {
-      const result = await chrome.storage.sync.get('stats');
-      if (result.stats) {
-        this.stats = { ...DEFAULT_STATS, ...result.stats };
-      }
-    } catch (error) {
-      console.error('Failed to load stats:', error);
+    if (statsResult[STORAGE_KEYS.STATS]) {
+      this.stats = { ...DEFAULT_STATS, ...statsResult[STORAGE_KEYS.STATS] };
     }
   }
 
   private async saveSettings(): Promise<void> {
-    try {
-      await chrome.storage.sync.set({ settings: this.settings });
-      this.showToast('Settings saved');
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      this.showToast('Failed to save settings');
-    }
+    await chrome.storage.sync.set({ [STORAGE_KEYS.SETTINGS]: this.settings });
+    this.showToast('Settings saved');
   }
 
   private async saveStats(): Promise<void> {
-    try {
-      await chrome.storage.sync.set({ stats: this.stats });
-    } catch (error) {
-      console.error('Failed to save stats:', error);
-    }
+    await chrome.storage.sync.set({ [STORAGE_KEYS.STATS]: this.stats });
   }
 
   private applyTheme(): void {
-    const theme = this.settings.theme;
+    const resolved = resolveTheme(this.settings.theme);
+    document.body.setAttribute('data-theme', resolved);
 
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.body.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-    } else {
-      document.body.setAttribute('data-theme', theme);
-    }
-
-    // Update active button
     document.querySelectorAll('.theme-option').forEach((btn) => {
-      btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
+      const btnTheme = btn.getAttribute('data-theme');
+      btn.classList.toggle('active', btnTheme === this.settings.theme);
     });
   }
 
-  private renderUI(): void {
+  private render(): void {
     this.renderDomainList();
     this.renderSliders();
     this.renderStats();
@@ -82,17 +81,16 @@ class OptionsPage {
     const container = document.getElementById('domainList');
     if (!container) return;
 
-    container.innerHTML = '';
-
-    this.settings.blacklist.forEach((domain) => {
-      const tag = document.createElement('div');
-      tag.className = 'domain-tag';
-      tag.innerHTML = `
-        <span>${domain}</span>
-        <button class="remove-btn" data-domain="${domain}">×</button>
-      `;
-      container.appendChild(tag);
-    });
+    container.innerHTML = this.settings.blacklist
+      .map(
+        (domain) => `
+        <span class="domain-tag">
+          ${domain}
+          <button data-domain="${domain}" aria-label="Remove ${domain}">×</button>
+        </span>
+      `
+      )
+      .join('');
   }
 
   private renderSliders(): void {
@@ -102,84 +100,69 @@ class OptionsPage {
     const unlockValue = document.getElementById('unlockValue');
 
     if (pauseSlider && pauseValue) {
-      pauseSlider.value = this.settings.pauseDuration.toString();
-      pauseValue.textContent = `${this.settings.pauseDuration} seconds`;
+      pauseSlider.value = String(this.settings.pauseDuration);
+      pauseValue.textContent = `${this.settings.pauseDuration}s`;
     }
 
     if (unlockSlider && unlockValue) {
-      unlockSlider.value = this.settings.unlockDuration.toString();
-      unlockValue.textContent = `${this.settings.unlockDuration} minute${this.settings.unlockDuration !== 1 ? 's' : ''}`;
+      unlockSlider.value = String(this.settings.unlockDuration);
+      unlockValue.textContent = `${this.settings.unlockDuration}m`;
     }
   }
 
   private renderStats(): void {
-    const resistedCount = document.getElementById('resistedCount');
-    const intentionalCount = document.getElementById('intentionalCount');
+    const resistedEl = document.getElementById('resistedCount');
+    const intentionalEl = document.getElementById('intentionalCount');
 
-    if (resistedCount) {
-      resistedCount.textContent = this.stats.temptationsResisted.toString();
-    }
-
-    if (intentionalCount) {
-      intentionalCount.textContent = this.stats.intentionalVisits.toString();
-    }
+    if (resistedEl) resistedEl.textContent = String(this.stats.temptationsResisted);
+    if (intentionalEl) intentionalEl.textContent = String(this.stats.intentionalVisits);
   }
 
   private setupEventListeners(): void {
     // Add domain
-    const addBtn = document.getElementById('addDomainBtn');
-    const domainInput = document.getElementById('domainInput') as HTMLInputElement;
-
-    addBtn?.addEventListener('click', () => this.addDomain());
-    domainInput?.addEventListener('keypress', (e) => {
+    document.getElementById('addDomainBtn')?.addEventListener('click', () => this.addDomain());
+    document.getElementById('domainInput')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') this.addDomain();
     });
 
     // Remove domain
     document.getElementById('domainList')?.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (target.classList.contains('remove-btn')) {
-        const domain = target.getAttribute('data-domain');
+      const btn = (e.target as HTMLElement).closest('button[data-domain]');
+      if (btn) {
+        const domain = btn.getAttribute('data-domain');
         if (domain) this.removeDomain(domain);
       }
     });
 
-    // Pause slider
+    // Sliders
     const pauseSlider = document.getElementById('pauseSlider') as HTMLInputElement;
     const pauseValue = document.getElementById('pauseValue');
 
     pauseSlider?.addEventListener('input', () => {
-      const value = parseInt(pauseSlider.value);
-      if (pauseValue) {
-        pauseValue.textContent = `${value} seconds`;
-      }
+      if (pauseValue) pauseValue.textContent = `${pauseSlider.value}s`;
     });
 
     pauseSlider?.addEventListener('change', () => {
-      this.settings.pauseDuration = parseInt(pauseSlider.value);
+      this.settings.pauseDuration = Number(pauseSlider.value);
       this.saveSettings();
     });
 
-    // Unlock slider
     const unlockSlider = document.getElementById('unlockSlider') as HTMLInputElement;
     const unlockValue = document.getElementById('unlockValue');
 
     unlockSlider?.addEventListener('input', () => {
-      const value = parseInt(unlockSlider.value);
-      if (unlockValue) {
-        unlockValue.textContent = `${value} minute${value !== 1 ? 's' : ''}`;
-      }
+      if (unlockValue) unlockValue.textContent = `${unlockSlider.value}m`;
     });
 
     unlockSlider?.addEventListener('change', () => {
-      this.settings.unlockDuration = parseInt(unlockSlider.value);
+      this.settings.unlockDuration = Number(unlockSlider.value);
       this.saveSettings();
     });
 
-    // Theme buttons
+    // Theme
     document.querySelectorAll('.theme-option').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const theme = btn.getAttribute('data-theme') as 'light' | 'dark' | 'system';
+        const theme = btn.getAttribute('data-theme') as Theme;
         this.settings.theme = theme;
         this.applyTheme();
         this.saveSettings();
@@ -187,24 +170,30 @@ class OptionsPage {
     });
 
     // Reset stats
-    document.getElementById('resetStatsBtn')?.addEventListener('click', () => {
-      this.resetStats();
+    document.getElementById('resetStatsBtn')?.addEventListener('click', () => this.resetStats());
+
+    // Export/Import
+    document.getElementById('exportBtn')?.addEventListener('click', () => this.exportSettings());
+    document.getElementById('importBtn')?.addEventListener('click', () => {
+      document.getElementById('importFile')?.click();
+    });
+    document.getElementById('importFile')?.addEventListener('change', (e) => {
+      this.importSettings(e);
     });
 
-    // Listen for system theme changes
+    // System theme changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if (this.settings.theme === 'system') {
-        this.applyTheme();
-      }
+      if (this.settings.theme === 'system') this.applyTheme();
     });
+  }
 
-    // Listen for storage changes from other contexts
+  private listenForChanges(): void {
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'sync') {
-        if (changes.stats) {
-          this.stats = { ...DEFAULT_STATS, ...changes.stats.newValue };
-          this.renderStats();
-        }
+      if (areaName !== 'sync') return;
+
+      if (changes[STORAGE_KEYS.STATS]) {
+        this.stats = { ...DEFAULT_STATS, ...changes[STORAGE_KEYS.STATS].newValue };
+        this.renderStats();
       }
     });
   }
@@ -213,24 +202,15 @@ class OptionsPage {
     const input = document.getElementById('domainInput') as HTMLInputElement;
     if (!input) return;
 
-    let domain = input.value.trim().toLowerCase();
-
-    // Remove protocol and path
-    domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+    const domain = parseDomain(input.value);
 
     if (!domain) {
-      this.showToast('Please enter a domain');
-      return;
-    }
-
-    // Basic domain validation
-    if (!/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/.test(domain)) {
-      this.showToast('Invalid domain format');
+      this.showToast('Invalid domain');
       return;
     }
 
     if (this.settings.blacklist.includes(domain)) {
-      this.showToast('Domain already in list');
+      this.showToast('Domain already added');
       return;
     }
 
@@ -247,9 +227,7 @@ class OptionsPage {
   }
 
   private resetStats(): void {
-    if (!confirm('Are you sure you want to reset all statistics?')) {
-      return;
-    }
+    if (!confirm('Reset all statistics to zero?')) return;
 
     this.stats = { ...DEFAULT_STATS };
     this.saveStats();
@@ -257,18 +235,73 @@ class OptionsPage {
     this.showToast('Statistics reset');
   }
 
+  private exportSettings(): void {
+    const data: ExportData = {
+      version: '1.0.0',
+      exportedAt: new Date().toISOString(),
+      settings: this.settings,
+      stats: this.stats,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nudge-settings-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    this.showToast('Settings exported');
+  }
+
+  private async importSettings(e: Event): Promise<void> {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text) as ExportData;
+
+      // Validate structure
+      if (!data.settings || !Array.isArray(data.settings.blacklist)) {
+        throw new Error('Invalid file format');
+      }
+
+      // Merge with defaults to ensure all fields exist
+      this.settings = { ...DEFAULT_SETTINGS, ...data.settings };
+
+      if (data.stats) {
+        this.stats = { ...DEFAULT_STATS, ...data.stats };
+        await this.saveStats();
+      }
+
+      await this.saveSettings();
+      this.applyTheme();
+      this.render();
+      this.showToast('Settings imported');
+    } catch {
+      this.showToast('Invalid settings file');
+    }
+
+    // Reset file input
+    input.value = '';
+  }
+
   private showToast(message: string): void {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
     toast.textContent = message;
-    toast.classList.add('show');
+    toast.classList.add('visible');
 
     setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2500);
+      toast.classList.remove('visible');
+    }, 2000);
   }
 }
 
-// Initialize options page
+// Initialize
 new OptionsPage();

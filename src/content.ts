@@ -1,14 +1,33 @@
-import { MINDFUL_PROMPTS } from './constants/prompts';
-import { NudgeSettings, DEFAULT_SETTINGS } from './constants/types';
+/**
+ * Nudge Content Script
+ * Injects a mindfulness overlay on blacklisted domains
+ */
 
-// Inline CSS to avoid external file loading issues
-const OVERLAY_CSS = `
+import { getRandomPrompt } from './constants/prompts';
+import {
+  NudgeSettings,
+  NudgeStats,
+  SessionData,
+  DEFAULT_SETTINGS,
+  DEFAULT_STATS,
+  DEFAULT_SESSION,
+  STORAGE_KEYS,
+} from './types';
+import {
+  normalizeDomain,
+  isDomainBlacklisted,
+  isDomainUnlocked,
+  resolveTheme,
+} from './utils';
+
+/** CSS styles for the overlay - neutral charcoal/grey palette */
+const OVERLAY_STYLES = `
 :host {
   all: initial;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -16,29 +35,33 @@ const OVERLAY_CSS = `
 
 .nudge-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   z-index: 2147483647;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: opacity 0.3s ease-out;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
   overflow: hidden;
 }
 
-.nudge-overlay.theme-light {
-  background: rgba(250, 250, 250, 0.97);
-  color: #2d3748;
+.nudge-overlay.visible {
+  opacity: 1;
 }
 
+/* Light Theme - Soft whites and greys */
+.nudge-overlay.theme-light {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1d1d1f;
+}
+
+/* Dark Theme - True charcoal/black */
 .nudge-overlay.theme-dark {
-  background: rgba(26, 32, 44, 0.98);
-  color: #e2e8f0;
+  background: rgba(0, 0, 0, 0.95);
+  color: #f5f5f7;
 }
 
 .nudge-container {
@@ -46,97 +69,134 @@ const OVERLAY_CSS = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
-  max-width: 480px;
-  padding: 3rem;
+  gap: clamp(1.5rem, 4vh, 3rem);
+  max-width: 90vw;
+  width: 100%;
+  padding: clamp(1.5rem, 4vw, 3rem);
   text-align: center;
 }
 
+/* Breathing Circle */
 .breathing-circle-container {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: clamp(120px, 25vmin, 200px);
+  height: clamp(120px, 25vmin, 200px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .breathing-circle {
-  width: 100px;
-  height: 100px;
+  width: 60%;
+  height: 60%;
   border-radius: 50%;
   animation: breathe 8s ease-in-out infinite;
 }
 
 .theme-light .breathing-circle {
-  background: linear-gradient(135deg, #81e6d9 0%, #4fd1c5 50%, #38b2ac 100%);
-  box-shadow: 0 0 60px rgba(79, 209, 197, 0.4);
+  background: radial-gradient(circle, #e8e8ed 0%, #d2d2d7 100%);
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.05),
+    inset 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 .theme-dark .breathing-circle {
-  background: linear-gradient(135deg, #4fd1c5 0%, #319795 50%, #2c7a7b 100%);
-  box-shadow: 0 0 60px rgba(79, 209, 197, 0.3);
+  background: radial-gradient(circle, #3a3a3c 0%, #2c2c2e 100%);
+  box-shadow:
+    0 0 60px rgba(255, 255, 255, 0.03),
+    inset 0 0 20px rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes breathe {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.8;
+    opacity: 0.7;
   }
   50% {
-    transform: scale(1.5);
+    transform: scale(1.4);
     opacity: 1;
   }
 }
 
+/* Timer */
 .timer {
   position: absolute;
-  font-size: 2.5rem;
-  font-weight: 300;
-  letter-spacing: 0.05em;
+  font-size: clamp(2rem, 5vmin, 3rem);
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .theme-light .timer {
-  color: #2d3748;
+  color: #1d1d1f;
 }
 
 .theme-dark .timer {
-  color: #f7fafc;
+  color: #f5f5f7;
 }
 
+/* Prompt */
 .prompt {
-  font-size: 1.5rem;
+  font-size: clamp(1.125rem, 3vmin, 1.5rem);
   font-weight: 400;
-  line-height: 1.6;
-  max-width: 400px;
-  opacity: 0.9;
+  line-height: 1.5;
+  max-width: 28ch;
+  letter-spacing: -0.01em;
 }
 
 .theme-light .prompt {
-  color: #4a5568;
+  color: #424245;
 }
 
 .theme-dark .prompt {
-  color: #cbd5e0;
+  color: #a1a1a6;
 }
 
+/* Breathing instruction */
+.breathing-text {
+  font-size: clamp(0.6875rem, 1.5vmin, 0.8125rem);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: breatheText 8s ease-in-out infinite;
+}
+
+.theme-light .breathing-text {
+  color: #86868b;
+}
+
+.theme-dark .breathing-text {
+  color: #6e6e73;
+}
+
+@keyframes breatheText {
+  0%, 45%, 100% { opacity: 0.4; }
+  22.5% { opacity: 0.8; }
+  72.5% { opacity: 0.8; }
+}
+
+/* Buttons */
 .buttons-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   width: 100%;
-  max-width: 280px;
+  max-width: 260px;
+  margin-top: clamp(0.5rem, 2vh, 1rem);
 }
 
 .nudge-btn {
-  padding: 1rem 2rem;
-  font-size: 1rem;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   border-radius: 12px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
   font-family: inherit;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nudge-btn:focus {
@@ -144,15 +204,16 @@ const OVERLAY_CSS = `
 }
 
 .nudge-btn:focus-visible {
-  outline: 2px solid #4fd1c5;
+  outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
+/* Continue Button */
 .continue-btn {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
   pointer-events: none;
-  transition: all 0.4s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .continue-btn.visible {
@@ -162,240 +223,234 @@ const OVERLAY_CSS = `
 }
 
 .theme-light .continue-btn {
-  background: linear-gradient(135deg, #4fd1c5 0%, #38b2ac 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(79, 209, 197, 0.3);
+  background: #1d1d1f;
+  color: #ffffff;
 }
 
-.theme-light .continue-btn:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(79, 209, 197, 0.4);
-  transform: translateY(-2px);
+.theme-light .continue-btn:hover {
+  background: #424245;
+}
+
+.theme-light .continue-btn:active {
+  transform: scale(0.98);
 }
 
 .theme-dark .continue-btn {
-  background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(49, 151, 149, 0.3);
+  background: #f5f5f7;
+  color: #1d1d1f;
 }
 
-.theme-dark .continue-btn:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(49, 151, 149, 0.4);
-  transform: translateY(-2px);
+.theme-dark .continue-btn:hover {
+  background: #e8e8ed;
 }
 
+.theme-dark .continue-btn:active {
+  transform: scale(0.98);
+}
+
+/* Close Button */
 .close-btn {
   background: transparent;
-  border: 2px solid currentColor;
-  opacity: 0.7;
 }
 
 .theme-light .close-btn {
-  color: #718096;
+  color: #86868b;
 }
 
 .theme-light .close-btn:hover {
-  background: rgba(113, 128, 150, 0.1);
-  opacity: 1;
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .theme-dark .close-btn {
-  color: #a0aec0;
+  color: #6e6e73;
 }
 
 .theme-dark .close-btn:hover {
-  background: rgba(160, 174, 192, 0.1);
-  opacity: 1;
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.breathing-text {
-  font-size: 0.875rem;
-  font-weight: 400;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0.6;
-  animation: breatheText 8s ease-in-out infinite;
-}
-
-@keyframes breatheText {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  25% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  75% {
-    opacity: 1;
-  }
-}
-
-.nudge-overlay.entering {
-  opacity: 0;
-}
-
-.nudge-overlay.entered {
-  opacity: 1;
-}
-
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .breathing-circle {
     animation: none;
-    transform: scale(1.25);
-    opacity: 0.9;
+    transform: scale(1.2);
+    opacity: 0.85;
   }
 
   .breathing-text {
     animation: none;
-    opacity: 0.8;
+    opacity: 0.6;
   }
 
   .nudge-overlay,
-  .continue-btn {
+  .continue-btn,
+  .nudge-btn {
     transition: none;
   }
 }
 `;
 
+/**
+ * NudgeOverlay class handles the mindfulness overlay
+ */
 class NudgeOverlay {
   private shadowHost: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
   private timerInterval: number | null = null;
-  private settings: NudgeSettings = DEFAULT_SETTINGS;
-  private currentDomain: string;
-  private observer: MutationObserver | null = null;
+  private settings: NudgeSettings = { ...DEFAULT_SETTINGS };
+  private readonly currentDomain: string;
+  private mutationObserver: MutationObserver | null = null;
 
   constructor() {
-    this.currentDomain = this.extractDomain(window.location.hostname);
+    this.currentDomain = normalizeDomain(window.location.hostname);
   }
 
-  private extractDomain(hostname: string): string {
-    // Remove www. prefix and get base domain
-    return hostname.replace(/^www\./, '').toLowerCase();
-  }
-
-  private getRandomPrompt(): string {
-    const index = Math.floor(Math.random() * MINDFUL_PROMPTS.length);
-    return MINDFUL_PROMPTS[index];
-  }
-
-  private getTheme(): 'light' | 'dark' {
-    if (this.settings.theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return this.settings.theme;
-  }
-
+  /**
+   * Initialize the overlay - check if domain should be nudged
+   */
   async init(): Promise<void> {
     try {
-      // Load settings
-      const result = await chrome.storage.sync.get('settings');
-      if (result.settings) {
-        this.settings = { ...DEFAULT_SETTINGS, ...result.settings };
+      await this.loadSettings();
+
+      if (!this.shouldCheckDomain()) {
+        return;
       }
 
-      // Check if domain should be nudged
       const shouldNudge = await this.shouldShowNudge();
 
       if (shouldNudge) {
-        this.createOverlay();
+        this.injectOverlay();
       }
 
-      // Listen for storage changes
-      chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName === 'sync' && changes.settings) {
-          this.settings = { ...DEFAULT_SETTINGS, ...changes.settings.newValue };
-        }
-        if (areaName === 'local' && changes.sessions) {
-          // Re-check if we should show nudge when sessions change
-          this.checkAndUpdateOverlay();
-        }
-      });
-    } catch (error) {
-      console.error('Nudge: Failed to initialize', error);
+      this.listenForChanges();
+    } catch {
+      // Fail silently - don't disrupt user browsing
     }
   }
 
-  private async shouldShowNudge(): Promise<boolean> {
-    // Check if current domain is in blacklist
-    const isBlacklisted = this.settings.blacklist.some((domain) => {
-      const normalizedBlacklist = domain.toLowerCase().replace(/^www\./, '');
-      return this.currentDomain === normalizedBlacklist ||
-             this.currentDomain.endsWith('.' + normalizedBlacklist);
-    });
-
-    if (!isBlacklisted) {
+  /**
+   * Quick check if current domain could possibly be in blacklist
+   */
+  private shouldCheckDomain(): boolean {
+    // Skip extension pages, local files, etc.
+    const protocol = window.location.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') {
       return false;
     }
 
-    // Check if domain is currently unlocked
-    try {
-      const result = await chrome.storage.local.get('sessions');
-      const sessions = result.sessions || { unlockedDomains: {} };
-      const unlockExpiry = sessions.unlockedDomains[this.currentDomain];
-
-      if (unlockExpiry && Date.now() < unlockExpiry) {
-        return false; // Domain is unlocked
-      }
-    } catch (error) {
-      console.error('Nudge: Failed to check session', error);
+    // Skip if no blacklist
+    if (!this.settings.blacklist.length) {
+      return false;
     }
 
     return true;
   }
 
-  private async checkAndUpdateOverlay(): Promise<void> {
+  /**
+   * Load settings from storage
+   */
+  private async loadSettings(): Promise<void> {
+    const result = await chrome.storage.sync.get(STORAGE_KEYS.SETTINGS);
+    if (result[STORAGE_KEYS.SETTINGS]) {
+      this.settings = { ...DEFAULT_SETTINGS, ...result[STORAGE_KEYS.SETTINGS] };
+    }
+  }
+
+  /**
+   * Check if the overlay should be shown
+   */
+  private async shouldShowNudge(): Promise<boolean> {
+    // Check blacklist
+    if (!isDomainBlacklisted(this.currentDomain, this.settings.blacklist)) {
+      return false;
+    }
+
+    // Check if currently unlocked
+    const result = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS);
+    const sessions: SessionData = result[STORAGE_KEYS.SESSIONS] || DEFAULT_SESSION;
+
+    if (isDomainUnlocked(this.currentDomain, sessions.unlockedDomains)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Listen for storage changes to react to settings updates
+   */
+  private listenForChanges(): void {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'sync' && changes[STORAGE_KEYS.SETTINGS]) {
+        this.settings = { ...DEFAULT_SETTINGS, ...changes[STORAGE_KEYS.SETTINGS].newValue };
+      }
+
+      if (areaName === 'local' && changes[STORAGE_KEYS.SESSIONS]) {
+        this.handleSessionChange();
+      }
+    });
+  }
+
+  /**
+   * Handle session storage changes
+   */
+  private async handleSessionChange(): Promise<void> {
     const shouldNudge = await this.shouldShowNudge();
 
     if (shouldNudge && !this.shadowHost) {
-      this.createOverlay();
+      this.injectOverlay();
     } else if (!shouldNudge && this.shadowHost) {
       this.removeOverlay();
     }
   }
 
-  private createOverlay(): void {
+  /**
+   * Inject the overlay into the page
+   */
+  private injectOverlay(): void {
     // Prevent body scroll
     document.body.style.overflow = 'hidden';
 
     // Create shadow host
     this.shadowHost = document.createElement('div');
-    this.shadowHost.id = 'nudge-shadow-host';
+    this.shadowHost.id = 'nudge-overlay-host';
+    this.shadowHost.setAttribute('aria-hidden', 'false');
     this.shadowHost.style.cssText = `
       position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
+      inset: 0 !important;
       z-index: 2147483647 !important;
       pointer-events: auto !important;
     `;
 
-    // Create shadow root (closed mode makes it harder to inspect)
+    // Create closed shadow root for encapsulation
     this.shadowRoot = this.shadowHost.attachShadow({ mode: 'closed' });
 
-    // Add styles
-    const styleElement = document.createElement('style');
-    styleElement.textContent = OVERLAY_CSS;
-    this.shadowRoot.appendChild(styleElement);
+    // Inject styles
+    const styleEl = document.createElement('style');
+    styleEl.textContent = OVERLAY_STYLES;
+    this.shadowRoot.appendChild(styleEl);
 
-    // Create overlay content
-    const theme = this.getTheme();
-    const prompt = this.getRandomPrompt();
+    // Create overlay
+    const theme = resolveTheme(this.settings.theme);
+    const prompt = getRandomPrompt();
 
     const overlay = document.createElement('div');
-    overlay.className = `nudge-overlay theme-${theme} entering`;
+    overlay.className = `nudge-overlay theme-${theme}`;
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Mindfulness pause');
     overlay.innerHTML = `
       <div class="nudge-container">
-        <div class="breathing-text">Breathe</div>
+        <span class="breathing-text" aria-hidden="true">Breathe</span>
         <div class="breathing-circle-container">
-          <div class="breathing-circle"></div>
-          <div class="timer">${this.settings.pauseDuration}</div>
+          <div class="breathing-circle" aria-hidden="true"></div>
+          <span class="timer" role="timer" aria-live="polite">${this.settings.pauseDuration}</span>
         </div>
         <p class="prompt">${prompt}</p>
         <div class="buttons-container">
-          <button class="nudge-btn continue-btn" disabled>Continue to Site</button>
+          <button class="nudge-btn continue-btn" disabled aria-disabled="true">Continue to Site</button>
           <button class="nudge-btn close-btn">Close Tab</button>
         </div>
       </div>
@@ -404,36 +459,156 @@ class NudgeOverlay {
     this.shadowRoot.appendChild(overlay);
     document.documentElement.appendChild(this.shadowHost);
 
-    // Trigger entrance animation
+    // Trigger fade-in animation
     requestAnimationFrame(() => {
-      overlay.classList.remove('entering');
-      overlay.classList.add('entered');
+      requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+      });
     });
 
-    // Start timer
+    // Start countdown
     this.startTimer();
 
-    // Set up button handlers
-    this.setupButtonHandlers();
+    // Setup button handlers
+    this.setupEventHandlers();
 
-    // Set up re-injection observer (makes overlay robust against accidental removal)
-    this.setupReinjectionObserver();
+    // Watch for accidental removal
+    this.setupMutationObserver();
   }
 
-  private setupReinjectionObserver(): void {
-    this.observer = new MutationObserver((mutations) => {
+  /**
+   * Start the countdown timer
+   */
+  private startTimer(): void {
+    if (!this.shadowRoot) return;
+
+    let remaining = this.settings.pauseDuration;
+    const timerEl = this.shadowRoot.querySelector('.timer');
+    const continueBtn = this.shadowRoot.querySelector('.continue-btn') as HTMLButtonElement;
+
+    this.timerInterval = window.setInterval(() => {
+      remaining--;
+
+      if (timerEl) {
+        timerEl.textContent = remaining > 0 ? String(remaining) : '';
+      }
+
+      if (remaining <= 0) {
+        this.clearTimer();
+
+        if (continueBtn) {
+          continueBtn.disabled = false;
+          continueBtn.removeAttribute('aria-disabled');
+          continueBtn.classList.add('visible');
+          continueBtn.focus();
+        }
+      }
+    }, 1000);
+  }
+
+  /**
+   * Clear the timer interval
+   */
+  private clearTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  /**
+   * Setup button event handlers
+   */
+  private setupEventHandlers(): void {
+    if (!this.shadowRoot) return;
+
+    const continueBtn = this.shadowRoot.querySelector('.continue-btn');
+    const closeBtn = this.shadowRoot.querySelector('.close-btn');
+
+    continueBtn?.addEventListener('click', () => this.handleContinue());
+    closeBtn?.addEventListener('click', () => this.handleClose());
+
+    // Handle escape key
+    document.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  /**
+   * Handle keyboard events
+   */
+  private handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this.shadowHost) {
+      this.handleClose();
+    }
+  };
+
+  /**
+   * Handle "Continue to Site" click
+   */
+  private async handleContinue(): Promise<void> {
+    try {
+      // Get current sessions
+      const result = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS);
+      const sessions: SessionData = result[STORAGE_KEYS.SESSIONS] || { ...DEFAULT_SESSION };
+
+      // Unlock domain
+      const unlockDuration = this.settings.unlockDuration * 60 * 1000;
+      sessions.unlockedDomains[this.currentDomain] = Date.now() + unlockDuration;
+
+      await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: sessions });
+
+      // Update stats
+      const statsResult = await chrome.storage.sync.get(STORAGE_KEYS.STATS);
+      const stats: NudgeStats = statsResult[STORAGE_KEYS.STATS] || { ...DEFAULT_STATS };
+      stats.intentionalVisits++;
+
+      await chrome.storage.sync.set({ [STORAGE_KEYS.STATS]: stats });
+
+      // Remove overlay
+      this.removeOverlay();
+    } catch {
+      // Remove overlay even on error
+      this.removeOverlay();
+    }
+  }
+
+  /**
+   * Handle "Close Tab" click
+   */
+  private async handleClose(): Promise<void> {
+    try {
+      // Update stats
+      const result = await chrome.storage.sync.get(STORAGE_KEYS.STATS);
+      const stats: NudgeStats = result[STORAGE_KEYS.STATS] || { ...DEFAULT_STATS };
+      stats.temptationsResisted++;
+
+      await chrome.storage.sync.set({ [STORAGE_KEYS.STATS]: stats });
+
+      // Close tab via background script
+      chrome.runtime.sendMessage({ type: 'CLOSE_TAB' });
+    } catch {
+      // Try to close anyway
+      chrome.runtime.sendMessage({ type: 'CLOSE_TAB' });
+    }
+  }
+
+  /**
+   * Watch for overlay removal and re-inject if needed
+   */
+  private setupMutationObserver(): void {
+    this.mutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        for (const removedNode of mutation.removedNodes) {
-          if (removedNode === this.shadowHost) {
-            // Re-check if we should show the nudge
-            this.shouldShowNudge().then((shouldNudge) => {
-              if (shouldNudge) {
-                // Small delay to prevent infinite loops
+        for (const node of mutation.removedNodes) {
+          if (node === this.shadowHost) {
+            // Re-check and re-inject if still needed
+            this.shouldShowNudge().then((shouldShow) => {
+              if (shouldShow) {
                 setTimeout(() => {
-                  if (!document.getElementById('nudge-shadow-host')) {
-                    this.createOverlay();
+                  if (!document.getElementById('nudge-overlay-host')) {
+                    this.shadowHost = null;
+                    this.shadowRoot = null;
+                    this.injectOverlay();
                   }
-                }, 100);
+                }, 50);
               }
             });
             return;
@@ -442,114 +617,30 @@ class NudgeOverlay {
       }
     });
 
-    this.observer.observe(document.documentElement, {
-      childList: true,
-      subtree: false,
-    });
+    this.mutationObserver.observe(document.documentElement, { childList: true });
   }
 
-  private startTimer(): void {
-    if (!this.shadowRoot) return;
-
-    let timeLeft = this.settings.pauseDuration;
-    const timerElement = this.shadowRoot.querySelector('.timer');
-    const continueBtn = this.shadowRoot.querySelector('.continue-btn') as HTMLButtonElement;
-
-    this.timerInterval = window.setInterval(() => {
-      timeLeft--;
-
-      if (timerElement) {
-        timerElement.textContent = timeLeft.toString();
-      }
-
-      if (timeLeft <= 0) {
-        if (this.timerInterval) {
-          clearInterval(this.timerInterval);
-          this.timerInterval = null;
-        }
-
-        if (timerElement) {
-          timerElement.textContent = '';
-        }
-
-        if (continueBtn) {
-          continueBtn.disabled = false;
-          continueBtn.classList.add('visible');
-        }
-      }
-    }, 1000);
-  }
-
-  private setupButtonHandlers(): void {
-    if (!this.shadowRoot) return;
-
-    const continueBtn = this.shadowRoot.querySelector('.continue-btn');
-    const closeBtn = this.shadowRoot.querySelector('.close-btn');
-
-    continueBtn?.addEventListener('click', () => this.handleContinue());
-    closeBtn?.addEventListener('click', () => this.handleCloseTab());
-  }
-
-  private async handleContinue(): Promise<void> {
-    try {
-      // Unlock domain for the configured duration
-      const result = await chrome.storage.local.get('sessions');
-      const sessions = result.sessions || { unlockedDomains: {} };
-
-      const unlockDurationMs = this.settings.unlockDuration * 60 * 1000;
-      sessions.unlockedDomains[this.currentDomain] = Date.now() + unlockDurationMs;
-
-      await chrome.storage.local.set({ sessions });
-
-      // Increment intentional visits stat
-      const statsResult = await chrome.storage.sync.get('stats');
-      const stats = statsResult.stats || { temptationsResisted: 0, intentionalVisits: 0 };
-      stats.intentionalVisits++;
-      await chrome.storage.sync.set({ stats });
-
-      // Remove overlay
-      this.removeOverlay();
-    } catch (error) {
-      console.error('Nudge: Failed to handle continue', error);
-      // Still remove overlay even if storage fails
-      this.removeOverlay();
-    }
-  }
-
-  private async handleCloseTab(): Promise<void> {
-    try {
-      // Increment temptations resisted stat
-      const statsResult = await chrome.storage.sync.get('stats');
-      const stats = statsResult.stats || { temptationsResisted: 0, intentionalVisits: 0 };
-      stats.temptationsResisted++;
-      await chrome.storage.sync.set({ stats });
-
-      // Send message to background to close tab
-      chrome.runtime.sendMessage({ type: 'CLOSE_TAB' });
-    } catch (error) {
-      console.error('Nudge: Failed to handle close tab', error);
-      // Try to close anyway
-      chrome.runtime.sendMessage({ type: 'CLOSE_TAB' });
-    }
-  }
-
+  /**
+   * Remove the overlay from the page
+   */
   private removeOverlay(): void {
     // Clear timer
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-      this.timerInterval = null;
-    }
+    this.clearTimer();
 
     // Disconnect observer
-    if (this.observer) {
-      this.observer.disconnect();
-      this.observer = null;
+    if (this.mutationObserver) {
+      this.mutationObserver.disconnect();
+      this.mutationObserver = null;
     }
 
+    // Remove keydown listener
+    document.removeEventListener('keydown', this.handleKeyDown);
+
     // Remove shadow host
-    if (this.shadowHost && this.shadowHost.parentNode) {
+    if (this.shadowHost?.parentNode) {
       this.shadowHost.parentNode.removeChild(this.shadowHost);
     }
+
     this.shadowHost = null;
     this.shadowRoot = null;
 
@@ -560,11 +651,7 @@ class NudgeOverlay {
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const nudge = new NudgeOverlay();
-    nudge.init();
-  });
+  document.addEventListener('DOMContentLoaded', () => new NudgeOverlay().init());
 } else {
-  const nudge = new NudgeOverlay();
-  nudge.init();
+  new NudgeOverlay().init();
 }

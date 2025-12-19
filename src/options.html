@@ -6,33 +6,31 @@
   <title>Nudge Settings</title>
   <style>
     :root {
-      --bg-primary: #fafafa;
-      --bg-secondary: #ffffff;
-      --bg-tertiary: #f7fafc;
-      --text-primary: #2d3748;
-      --text-secondary: #4a5568;
-      --text-muted: #718096;
-      --accent: #4fd1c5;
-      --accent-dark: #38b2ac;
-      --accent-light: #81e6d9;
-      --border: #e2e8f0;
-      --shadow: rgba(0, 0, 0, 0.05);
-      --success: #48bb78;
-      --danger: #fc8181;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f7;
+      --bg-tertiary: #e8e8ed;
+      --text-primary: #1d1d1f;
+      --text-secondary: #424245;
+      --text-muted: #86868b;
+      --border: #d2d2d7;
+      --accent: #1d1d1f;
+      --accent-hover: #424245;
+      --danger: #ff3b30;
+      --danger-hover: #ff453a;
     }
 
     [data-theme="dark"] {
-      --bg-primary: #1a202c;
-      --bg-secondary: #2d3748;
-      --bg-tertiary: #252d3d;
-      --text-primary: #f7fafc;
-      --text-secondary: #e2e8f0;
-      --text-muted: #a0aec0;
-      --accent: #4fd1c5;
-      --accent-dark: #319795;
-      --accent-light: #81e6d9;
-      --border: #4a5568;
-      --shadow: rgba(0, 0, 0, 0.2);
+      --bg-primary: #000000;
+      --bg-secondary: #1c1c1e;
+      --bg-tertiary: #2c2c2e;
+      --text-primary: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-muted: #6e6e73;
+      --border: #3a3a3c;
+      --accent: #f5f5f7;
+      --accent-hover: #e8e8ed;
+      --danger: #ff453a;
+      --danger-hover: #ff3b30;
     }
 
     * {
@@ -42,17 +40,18 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
-      line-height: 1.6;
+      line-height: 1.5;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
-      max-width: 720px;
+      max-width: 640px;
       margin: 0 auto;
-      padding: 3rem 2rem;
+      padding: 3rem 1.5rem;
     }
 
     header {
@@ -69,146 +68,164 @@
     }
 
     .logo-circle {
-      width: 48px;
-      height: 48px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-light), var(--accent));
-      box-shadow: 0 4px 14px rgba(79, 209, 197, 0.3);
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 600;
       letter-spacing: -0.02em;
     }
 
     .tagline {
       color: var(--text-muted);
-      font-size: 1rem;
+      font-size: 0.9375rem;
     }
 
     .card {
       background: var(--bg-secondary);
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 2px 8px var(--shadow);
-      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
     }
 
     .card-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
+      gap: 0.625rem;
+      margin-bottom: 0.75rem;
     }
 
     .card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      background: var(--bg-tertiary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
+      font-size: 1.125rem;
     }
 
     .card-title {
-      font-size: 1.125rem;
+      font-size: 0.9375rem;
       font-weight: 600;
     }
 
     .card-description {
       color: var(--text-muted);
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       margin-bottom: 1rem;
     }
 
-    /* Blacklist */
-    .blacklist-input-container {
+    /* Form Elements */
+    .input-group {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
 
-    .blacklist-input {
+    input[type="text"] {
       flex: 1;
-      padding: 0.75rem 1rem;
+      padding: 0.625rem 0.875rem;
       border: 1px solid var(--border);
       border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--text-muted);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn {
+      padding: 0.625rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
       background: var(--bg-tertiary);
       color: var(--text-primary);
-      font-size: 0.9375rem;
-      font-family: inherit;
     }
 
-    .blacklist-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(79, 209, 197, 0.2);
+    .btn-secondary:hover {
+      background: var(--border);
     }
 
-    .add-btn {
-      padding: 0.75rem 1.25rem;
-      background: var(--accent);
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
       color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
     }
 
-    .add-btn:hover {
-      background: var(--accent-dark);
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
     }
 
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+
+    /* Domain Tags */
     .domain-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.375rem;
     }
 
     .domain-tag {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
+      gap: 0.375rem;
+      padding: 0.375rem 0.625rem;
       background: var(--bg-tertiary);
-      border-radius: 8px;
-      font-size: 0.875rem;
+      border-radius: 6px;
+      font-size: 0.8125rem;
     }
 
-    .domain-tag .remove-btn {
+    .domain-tag button {
       background: none;
       border: none;
       color: var(--text-muted);
       cursor: pointer;
       padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-size: 1rem;
       line-height: 1;
-      transition: color 0.2s;
+      transition: color 0.15s;
     }
 
-    .domain-tag .remove-btn:hover {
+    .domain-tag button:hover {
       color: var(--danger);
     }
 
     /* Sliders */
-    .slider-container {
-      margin-bottom: 1.5rem;
-    }
-
-    .slider-container:last-child {
-      margin-bottom: 0;
-    }
-
-    .slider-header {
+    .slider-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -216,40 +233,45 @@
     }
 
     .slider-label {
+      font-size: 0.875rem;
       font-weight: 500;
-      font-size: 0.9375rem;
     }
 
     .slider-value {
-      font-weight: 600;
-      color: var(--accent);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
     }
 
     input[type="range"] {
       width: 100%;
-      height: 6px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: var(--bg-tertiary);
       appearance: none;
       cursor: pointer;
+      margin-bottom: 1rem;
+    }
+
+    input[type="range"]:last-child {
+      margin-bottom: 0;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(79, 209, 197, 0.4);
-      transition: transform 0.2s;
+      transition: transform 0.15s;
     }
 
     input[type="range"]::-webkit-slider-thumb:hover {
       transform: scale(1.1);
     }
 
-    /* Theme toggle */
+    /* Theme Options */
     .theme-options {
       display: flex;
       gap: 0.5rem;
@@ -257,106 +279,81 @@
 
     .theme-option {
       flex: 1;
-      padding: 0.75rem;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-tertiary);
+      padding: 0.625rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-primary);
       cursor: pointer;
       text-align: center;
+      font-size: 0.8125rem;
       font-weight: 500;
-      font-size: 0.875rem;
-      transition: all 0.2s;
-      color: var(--text-secondary);
       font-family: inherit;
+      color: var(--text-secondary);
+      transition: all 0.15s;
     }
 
     .theme-option:hover {
-      border-color: var(--accent);
+      border-color: var(--text-muted);
     }
 
     .theme-option.active {
       border-color: var(--accent);
-      background: rgba(79, 209, 197, 0.1);
-      color: var(--accent);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
     }
 
     /* Stats */
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
     }
 
     .stat-box {
-      padding: 1.25rem;
+      padding: 1rem;
       background: var(--bg-tertiary);
-      border-radius: 12px;
+      border-radius: 8px;
       text-align: center;
     }
 
     .stat-value {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--accent);
+      font-size: 2rem;
+      font-weight: 600;
       line-height: 1;
       margin-bottom: 0.25rem;
+      font-variant-numeric: tabular-nums;
     }
 
     .stat-label {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    .reset-stats-btn {
-      width: 100%;
-      margin-top: 1rem;
-      padding: 0.75rem;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
+    /* Data Management */
+    .data-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
-    .reset-stats-btn:hover {
-      border-color: var(--danger);
-      color: var(--danger);
+    .data-actions .btn {
+      flex: 1;
+      min-width: 120px;
     }
 
-    /* Toast notification */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      padding: 0.875rem 1.5rem;
-      background: var(--text-primary);
-      color: var(--bg-primary);
-      border-radius: 10px;
-      font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      opacity: 0;
-      transition: all 0.3s ease;
-      z-index: 1000;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
+    /* Footer */
     footer {
       text-align: center;
       margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
       color: var(--text-muted);
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
     }
 
     footer a {
-      color: var(--accent);
+      color: var(--text-secondary);
       text-decoration: none;
     }
 
@@ -364,13 +361,48 @@
       text-decoration: underline;
     }
 
-    @media (max-width: 600px) {
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      padding: 0.75rem 1.25rem;
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 1000;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Hidden file input */
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 480px) {
       .container {
         padding: 2rem 1rem;
       }
 
       .stats-grid {
         grid-template-columns: 1fr;
+      }
+
+      .data-actions {
+        flex-direction: column;
+      }
+
+      .data-actions .btn {
+        width: 100%;
       }
     }
   </style>
@@ -386,48 +418,42 @@
     </header>
 
     <main>
-      <!-- Blacklist Card -->
-      <div class="card">
+      <!-- Blocked Sites -->
+      <section class="card">
         <div class="card-header">
-          <div class="card-icon">🚫</div>
+          <span class="card-icon">🚫</span>
           <h2 class="card-title">Blocked Sites</h2>
         </div>
-        <p class="card-description">Add domains that will trigger the mindfulness pause.</p>
-        <div class="blacklist-input-container">
-          <input type="text" class="blacklist-input" id="domainInput" placeholder="e.g., twitter.com">
-          <button class="add-btn" id="addDomainBtn">Add</button>
+        <p class="card-description">Domains that trigger the mindfulness pause.</p>
+        <div class="input-group">
+          <input type="text" id="domainInput" placeholder="e.g., twitter.com" autocomplete="off">
+          <button class="btn btn-primary" id="addDomainBtn">Add</button>
         </div>
         <div class="domain-list" id="domainList"></div>
-      </div>
+      </section>
 
-      <!-- Timer Settings Card -->
-      <div class="card">
+      <!-- Timer Settings -->
+      <section class="card">
         <div class="card-header">
-          <div class="card-icon">⏱️</div>
-          <h2 class="card-title">Timer Settings</h2>
+          <span class="card-icon">⏱</span>
+          <h2 class="card-title">Timing</h2>
         </div>
-
-        <div class="slider-container">
-          <div class="slider-header">
-            <span class="slider-label">Pause Duration</span>
-            <span class="slider-value" id="pauseValue">10 seconds</span>
-          </div>
-          <input type="range" id="pauseSlider" min="5" max="30" value="10" step="1">
+        <div class="slider-row">
+          <span class="slider-label">Pause Duration</span>
+          <span class="slider-value" id="pauseValue">10s</span>
         </div>
-
-        <div class="slider-container">
-          <div class="slider-header">
-            <span class="slider-label">Unlock Duration</span>
-            <span class="slider-value" id="unlockValue">15 minutes</span>
-          </div>
-          <input type="range" id="unlockSlider" min="1" max="60" value="15" step="1">
+        <input type="range" id="pauseSlider" min="5" max="30" value="10">
+        <div class="slider-row">
+          <span class="slider-label">Unlock Duration</span>
+          <span class="slider-value" id="unlockValue">15m</span>
         </div>
-      </div>
+        <input type="range" id="unlockSlider" min="1" max="60" value="15">
+      </section>
 
-      <!-- Appearance Card -->
-      <div class="card">
+      <!-- Appearance -->
+      <section class="card">
         <div class="card-header">
-          <div class="card-icon">🎨</div>
+          <span class="card-icon">◐</span>
           <h2 class="card-title">Appearance</h2>
         </div>
         <div class="theme-options">
@@ -435,12 +461,12 @@
           <button class="theme-option" data-theme="dark">Dark</button>
           <button class="theme-option" data-theme="system">System</button>
         </div>
-      </div>
+      </section>
 
-      <!-- Statistics Card -->
-      <div class="card">
+      <!-- Statistics -->
+      <section class="card">
         <div class="card-header">
-          <div class="card-icon">📊</div>
+          <span class="card-icon">📊</span>
           <h2 class="card-title">Statistics</h2>
         </div>
         <div class="stats-grid">
@@ -453,12 +479,26 @@
             <div class="stat-label">Intentional Visits</div>
           </div>
         </div>
-        <button class="reset-stats-btn" id="resetStatsBtn">Reset Statistics</button>
-      </div>
+        <button class="btn btn-ghost" id="resetStatsBtn" style="width: 100%;">Reset Statistics</button>
+      </section>
+
+      <!-- Data Management -->
+      <section class="card">
+        <div class="card-header">
+          <span class="card-icon">💾</span>
+          <h2 class="card-title">Data</h2>
+        </div>
+        <p class="card-description">Export your settings to transfer between devices, or import a backup.</p>
+        <div class="data-actions">
+          <button class="btn btn-secondary" id="exportBtn">Export Settings</button>
+          <button class="btn btn-secondary" id="importBtn">Import Settings</button>
+        </div>
+        <input type="file" id="importFile" accept=".json" class="hidden">
+      </section>
     </main>
 
     <footer>
-      <p>Nudge v1.0.0 — Made with mindfulness</p>
+      <p>Nudge v1.0.0 · <a href="https://github.com/user/nudge" target="_blank">GitHub</a> · 100% Private</p>
     </footer>
   </div>
 

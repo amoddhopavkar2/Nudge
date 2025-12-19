@@ -2,15 +2,11 @@
   "manifest_version": 3,
   "name": "Nudge",
   "version": "1.0.0",
-  "description": "A digital minimalism tool that introduces intentional friction to break impulsive browsing habits.",
+  "description": "Mindful browsing with intentional friction. A 10-second pause to break the cycle of impulsive scrolling.",
   "permissions": [
     "storage",
-    "tabs",
-    "activeTab",
-    "alarms"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "alarms",
+    "tabs"
   ],
   "background": {
     "service_worker": "background.js"

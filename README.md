@@ -1,41 +1,57 @@
 # Nudge
 
-A Chrome extension that introduces **intentional friction** to break the cycle of impulsive browsing and doomscrolling.
+**Intentional friction for mindful browsing.**
 
-## The Philosophy of Intentional Friction
+Nudge is a Chrome extension that introduces a 10-second breathing pause when you visit distracting websites. Instead of hard-blocking sites (which leads to frustration and workarounds), Nudge creates space for conscious choice.
 
-Modern apps are designed to be frictionless. One tap opens Twitter. One swipe reveals TikTok. This seamlessness is intentional—it maximizes engagement by removing every barrier between you and endless content.
+## Why Nudge?
+
+Modern apps are designed to be frictionless. One tap opens Twitter. One swipe reveals TikTok. This seamlessness is intentional—it maximizes engagement by removing every barrier between impulse and action.
 
 **Nudge takes the opposite approach.**
 
-Instead of hard-blocking distracting websites (which often leads to frustration and workarounds), Nudge introduces a **mindful pause**—a 10-second breathing exercise that creates space between impulse and action.
+When you visit a site on your blocklist, Nudge doesn't stop you. It simply asks you to breathe for 10 seconds. In that pause:
 
-This friction isn't about restriction. It's about **awareness**.
+- The urge often passes
+- You remember what you were actually trying to do
+- If you still want to continue, you can—but now it's a decision, not a reflex
 
-When you visit a blacklisted site, Nudge asks you to:
-- Take a deep breath
-- Reflect on why you're here
-- Make a conscious choice
-
-Often, that's all it takes. The urge passes. You remember what you were actually trying to do. And if you still want to continue? That's fine—at least it's now a deliberate decision, not a reflex.
+This is **intentional friction**: small barriers that interrupt autopilot behavior and restore agency.
 
 ## Features
 
-- **Breathing Overlay**: A calming full-screen pause with an animated breathing circle
-- **Mindful Prompts**: Randomized questions to encourage self-reflection
-- **Session Unlock**: After pausing, the site unlocks for a configurable duration (default: 15 minutes)
-- **Customizable Timer**: Set the pause duration from 5 to 30 seconds
-- **Dark & Light Themes**: Respects your system preference or manual choice
-- **Statistics**: Track your "temptations resisted" vs "intentional visits"
-- **100% Private**: All data stays local. No telemetry. No external APIs.
+- **Breathing Overlay** — Full-screen pause with animated breathing circle
+- **Mindful Prompts** — Randomized reflective questions
+- **Session Unlock** — Continue access for 15 minutes (configurable)
+- **Statistics** — Track "temptations resisted" vs "intentional visits"
+- **Export/Import** — Transfer your settings between devices
+- **Dark Mode** — True black theme for OLED displays
+- **100% Private** — All data stays on your device
+
+## Privacy First
+
+Nudge is built on a simple principle: **your data belongs to you**.
+
+- Zero data collection
+- Zero network requests
+- Zero analytics
+- Zero tracking
+
+Everything is stored locally. We can't see your data because it never reaches us.
+
+[Read our full Privacy Policy →](PRIVACY.md)
 
 ## Installation
 
-### From Source (Developer Mode)
+### Chrome Web Store
 
-1. Clone or download this repository:
+Coming soon.
+
+### Developer Mode
+
+1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/nudge.git
+   git clone https://github.com/user/nudge.git
    cd nudge
    ```
 
@@ -51,25 +67,46 @@ Often, that's all it takes. The urge passes. You remember what you were actually
 
 4. Load in Chrome:
    - Open `chrome://extensions/`
-   - Enable "Developer mode" (toggle in top right)
+   - Enable "Developer mode"
    - Click "Load unpacked"
    - Select the `dist` folder
 
-5. The options page will open automatically. Add your distracting sites!
-
-### Development Mode
-
-For active development with hot-reload watching:
+## Development
 
 ```bash
+# Development build
 npm run dev
+
+# Production build (minified)
+npm run build:prod
+
+# Type checking
+npm run typecheck
+
+# Generate icons
+npm run icons
 ```
 
-This watches for changes and rebuilds automatically. You'll still need to click the reload button on `chrome://extensions/` to see changes.
+## Project Structure
 
-## Default Blacklist
+```
+src/
+├── background.ts      # Service worker for session management
+├── content.ts         # Overlay injection and timer
+├── options.html       # Settings page UI
+├── options.ts         # Settings page logic
+├── types/
+│   └── index.ts       # TypeScript interfaces
+├── utils/
+│   └── index.ts       # Shared utilities
+└── constants/
+    └── prompts.ts     # Mindful prompts
+```
+
+## Default Blocklist
 
 Nudge comes pre-configured with common time-sink sites:
+
 - twitter.com / x.com
 - facebook.com
 - instagram.com
@@ -77,97 +114,35 @@ Nudge comes pre-configured with common time-sink sites:
 - tiktok.com
 - youtube.com
 
-You can add or remove sites from the options page.
+Customize your list in the settings page.
 
-## How It Works
+## Configuration
 
-1. When you navigate to a blacklisted domain, Nudge injects a full-screen overlay
-2. The overlay uses Shadow DOM to prevent CSS conflicts with the host site
-3. A 10-second timer counts down while you practice box breathing
-4. After the timer, you can choose to:
-   - **Continue**: The site unlocks for 15 minutes (configurable)
-   - **Close Tab**: The tab closes and your "temptations resisted" stat increases
-5. Session data is stored locally to remember your unlocked sites
-
-## Project Structure
-
-```
-nudge/
-├── public/
-│   ├── manifest.json      # Chrome extension manifest
-│   └── icons/             # Extension icons
-├── src/
-│   ├── background.ts      # Service worker for session management
-│   ├── content.ts         # Overlay injection and timer logic
-│   ├── options.html       # Settings page HTML
-│   ├── options.ts         # Settings page logic
-│   ├── constants/
-│   │   ├── prompts.ts     # Mindful prompts array
-│   │   └── types.ts       # TypeScript type definitions
-│   └── styles/
-│       └── overlay.css    # Overlay styles (Zen aesthetic)
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
-
-## Technical Details
-
-- **Manifest V3**: Uses the latest Chrome extension architecture
-- **TypeScript**: Full type safety across all modules
-- **Vite**: Fast, modern build tooling
-- **Shadow DOM**: Isolates overlay styles from host pages
-- **Storage API**:
-  - `storage.sync`: Settings and statistics (synced across devices)
-  - `storage.local`: Session data (device-specific)
-
-## Customization
-
-### Adding Custom Prompts
-
-Edit `src/constants/prompts.ts` to add your own mindful prompts:
-
-```typescript
-export const MINDFUL_PROMPTS: string[] = [
-  "Is this a conscious choice?",
-  "Your custom prompt here",
-  // ...
-];
-```
-
-### Styling
-
-The overlay uses a "Zen" aesthetic with:
-- Soft teal accents (#4FD1C5)
-- Clean sans-serif typography (Inter, system fonts)
-- Subtle animations and shadows
-- Full dark mode support
-
-Modify `src/styles/overlay.css` or the inline styles in `content.ts`.
-
-## Privacy
-
-Nudge is designed with privacy as a core principle:
-
-- **No tracking**: Zero analytics or telemetry
-- **No network requests**: Everything runs locally
-- **No accounts**: Your data never leaves your device
-- **Open source**: Audit the code yourself
+| Setting | Range | Default | Description |
+|---------|-------|---------|-------------|
+| Pause Duration | 5-30s | 10s | How long to breathe before continuing |
+| Unlock Duration | 1-60m | 15m | How long the site stays unlocked |
+| Theme | Light/Dark/System | System | UI appearance |
 
 ## Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest new features
-- Submit pull requests
-- Share your experience with intentional friction
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
+
+Easy first contributions:
+- Add new mindful prompts in `src/constants/prompts.ts`
+- Improve accessibility
+- Fix typos in documentation
+
+## Security
+
+Found a vulnerability? Please report it responsibly. See [SECURITY.md](SECURITY.md).
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-*"Between stimulus and response there is a space. In that space is our power to choose our response."*
+*"Between stimulus and response there is a space. In that space is our power to choose our response. In our response lies our growth and our freedom."*
+
 — Viktor Frankl

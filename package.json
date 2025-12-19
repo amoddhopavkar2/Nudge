@@ -4,10 +4,10 @@
   "description": "A digital minimalism Chrome extension that introduces intentional friction to break impulsive browsing habits",
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch",
+    "dev": "node scripts/build.cjs",
     "build": "tsc --noEmit && node scripts/build.cjs",
-    "build:vite": "vite build",
-    "preview": "vite preview",
+    "build:prod": "tsc --noEmit && node scripts/build.cjs --prod",
+    "typecheck": "tsc --noEmit",
     "icons": "node scripts/generate-icons.cjs"
   },
   "keywords": [
