@@ -1,0 +1,27 @@
+{
+  "name": "nudge-extension",
+  "version": "1.0.0",
+  "description": "A digital minimalism Chrome extension that introduces intentional friction to break impulsive browsing habits",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc --noEmit && node scripts/build.cjs",
+    "build:vite": "vite build",
+    "preview": "vite preview",
+    "icons": "node scripts/generate-icons.cjs"
+  },
+  "keywords": [
+    "chrome-extension",
+    "digital-minimalism",
+    "mindfulness",
+    "productivity"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+}
