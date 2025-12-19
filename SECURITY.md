@@ -9,7 +9,7 @@ If you discover a security vulnerability in Nudge, please report it responsibly.
 **Do NOT open a public issue for security vulnerabilities.**
 
 Instead:
-1. Email: [amoddhopavkar2@gmail.com]
+1. Email: amoddhopavkar2@gmail.com
 2. Or: Open a private security advisory on GitHub
 
 ### What to Include
