@@ -20,11 +20,11 @@ import {
   resolveTheme,
 } from './utils';
 
-/** CSS styles for the overlay - neutral charcoal/grey palette */
+/** CSS styles for the overlay - Zen teal/mint palette */
 const OVERLAY_STYLES = `
 :host {
   all: initial;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 *, *::before, *::after {
@@ -52,16 +52,16 @@ const OVERLAY_STYLES = `
   opacity: 1;
 }
 
-/* Light Theme - Soft whites and greys */
+/* Light Theme - Soft greys and mint */
 .nudge-overlay.theme-light {
-  background: rgba(255, 255, 255, 0.95);
-  color: #1d1d1f;
+  background: rgba(250, 250, 250, 0.97);
+  color: #2d3748;
 }
 
-/* Dark Theme - True charcoal/black */
+/* Dark Theme - Deep charcoal with muted teal */
 .nudge-overlay.theme-dark {
-  background: rgba(0, 0, 0, 0.95);
-  color: #f5f5f7;
+  background: rgba(26, 32, 44, 0.98);
+  color: #e2e8f0;
 }
 
 .nudge-container {
@@ -79,8 +79,8 @@ const OVERLAY_STYLES = `
 /* Breathing Circle */
 .breathing-circle-container {
   position: relative;
-  width: clamp(120px, 25vmin, 200px);
-  height: clamp(120px, 25vmin, 200px);
+  width: clamp(140px, 25vmin, 200px);
+  height: clamp(140px, 25vmin, 200px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,27 +94,22 @@ const OVERLAY_STYLES = `
 }
 
 .theme-light .breathing-circle {
-  background: radial-gradient(circle, #e8e8ed 0%, #d2d2d7 100%);
-  box-shadow:
-    0 0 40px rgba(0, 0, 0, 0.05),
-    inset 0 0 20px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, #81e6d9 0%, #4fd1c5 50%, #38b2ac 100%);
+  box-shadow: 0 0 60px rgba(79, 209, 197, 0.4);
 }
 
 .theme-dark .breathing-circle {
-  background: radial-gradient(circle, #3a3a3c 0%, #2c2c2e 100%);
-  box-shadow:
-    0 0 60px rgba(255, 255, 255, 0.03),
-    inset 0 0 20px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #4fd1c5 0%, #319795 50%, #2c7a7b 100%);
+  box-shadow: 0 0 60px rgba(79, 209, 197, 0.3);
 }
 
 @keyframes breathe {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.7;
+    opacity: 0.8;
   }
   50% {
-    transform: scale(1.4);
+    transform: scale(1.5);
     opacity: 1;
   }
 }
@@ -122,53 +117,53 @@ const OVERLAY_STYLES = `
 /* Timer */
 .timer {
   position: absolute;
-  font-size: clamp(2rem, 5vmin, 3rem);
-  font-weight: 200;
-  letter-spacing: 0.02em;
+  font-size: clamp(2rem, 5vmin, 2.5rem);
+  font-weight: 300;
+  letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
 }
 
 .theme-light .timer {
-  color: #1d1d1f;
+  color: #2d3748;
 }
 
 .theme-dark .timer {
-  color: #f5f5f7;
+  color: #f7fafc;
 }
 
 /* Prompt */
 .prompt {
-  font-size: clamp(1.125rem, 3vmin, 1.5rem);
+  font-size: clamp(1.25rem, 3vmin, 1.5rem);
   font-weight: 400;
-  line-height: 1.5;
-  max-width: 28ch;
-  letter-spacing: -0.01em;
+  line-height: 1.6;
+  max-width: 400px;
+  opacity: 0.9;
 }
 
 .theme-light .prompt {
-  color: #424245;
+  color: #4a5568;
 }
 
 .theme-dark .prompt {
-  color: #a1a1a6;
+  color: #cbd5e0;
 }
 
 /* Breathing instruction */
 .breathing-text {
-  font-size: clamp(0.6875rem, 1.5vmin, 0.8125rem);
-  font-weight: 500;
-  letter-spacing: 0.15em;
+  font-size: clamp(0.75rem, 1.5vmin, 0.875rem);
+  font-weight: 400;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0;
+  opacity: 0.6;
   animation: breatheText 8s ease-in-out infinite;
 }
 
 .theme-light .breathing-text {
-  color: #86868b;
+  color: #718096;
 }
 
 .theme-dark .breathing-text {
-  color: #6e6e73;
+  color: #a0aec0;
 }
 
 @keyframes breatheText {
@@ -204,16 +199,16 @@ const OVERLAY_STYLES = `
 }
 
 .nudge-btn:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid #4fd1c5;
   outline-offset: 2px;
 }
 
 /* Continue Button */
 .continue-btn {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
   pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .continue-btn.visible {
@@ -223,12 +218,14 @@ const OVERLAY_STYLES = `
 }
 
 .theme-light .continue-btn {
-  background: #1d1d1f;
-  color: #ffffff;
+  background: linear-gradient(135deg, #4fd1c5 0%, #38b2ac 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(79, 209, 197, 0.3);
 }
 
 .theme-light .continue-btn:hover {
-  background: #424245;
+  box-shadow: 0 6px 20px rgba(79, 209, 197, 0.4);
+  transform: translateY(-2px);
 }
 
 .theme-light .continue-btn:active {
@@ -236,12 +233,14 @@ const OVERLAY_STYLES = `
 }
 
 .theme-dark .continue-btn {
-  background: #f5f5f7;
-  color: #1d1d1f;
+  background: linear-gradient(135deg, #319795 0%, #2c7a7b 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(49, 151, 149, 0.3);
 }
 
 .theme-dark .continue-btn:hover {
-  background: #e8e8ed;
+  box-shadow: 0 6px 20px rgba(49, 151, 149, 0.4);
+  transform: translateY(-2px);
 }
 
 .theme-dark .continue-btn:active {
@@ -251,24 +250,26 @@ const OVERLAY_STYLES = `
 /* Close Button */
 .close-btn {
   background: transparent;
+  border: 2px solid currentColor;
+  opacity: 0.7;
 }
 
 .theme-light .close-btn {
-  color: #86868b;
+  color: #718096;
 }
 
 .theme-light .close-btn:hover {
-  color: #1d1d1f;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(113, 128, 150, 0.1);
+  opacity: 1;
 }
 
 .theme-dark .close-btn {
-  color: #6e6e73;
+  color: #a0aec0;
 }
 
 .theme-dark .close-btn:hover {
-  color: #f5f5f7;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(160, 174, 192, 0.1);
+  opacity: 1;
 }
 
 /* Reduced motion */

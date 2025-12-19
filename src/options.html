@@ -6,31 +6,34 @@
   <title>Nudge Settings</title>
   <style>
     :root {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f5f5f7;
-      --bg-tertiary: #e8e8ed;
-      --text-primary: #1d1d1f;
-      --text-secondary: #424245;
-      --text-muted: #86868b;
-      --border: #d2d2d7;
-      --accent: #1d1d1f;
-      --accent-hover: #424245;
-      --danger: #ff3b30;
-      --danger-hover: #ff453a;
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f7fafc;
+      --text-primary: #2d3748;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --accent: #4fd1c5;
+      --accent-dark: #38b2ac;
+      --accent-light: #81e6d9;
+      --border: #e2e8f0;
+      --shadow: rgba(0, 0, 0, 0.05);
+      --success: #48bb78;
+      --danger: #fc8181;
     }
 
     [data-theme="dark"] {
-      --bg-primary: #000000;
-      --bg-secondary: #1c1c1e;
-      --bg-tertiary: #2c2c2e;
-      --text-primary: #f5f5f7;
-      --text-secondary: #a1a1a6;
-      --text-muted: #6e6e73;
-      --border: #3a3a3c;
-      --accent: #f5f5f7;
-      --accent-hover: #e8e8ed;
-      --danger: #ff453a;
-      --danger-hover: #ff3b30;
+      --bg-primary: #1a202c;
+      --bg-secondary: #2d3748;
+      --bg-tertiary: #252d3d;
+      --text-primary: #f7fafc;
+      --text-secondary: #e2e8f0;
+      --text-muted: #a0aec0;
+      --accent: #4fd1c5;
+      --accent-dark: #319795;
+      --accent-light: #81e6d9;
+      --border: #4a5568;
+      --shadow: rgba(0, 0, 0, 0.2);
+      --danger: #fc8181;
     }
 
     * {
@@ -68,11 +71,11 @@
     }
 
     .logo-circle {
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--accent-light), var(--accent));
+      box-shadow: 0 4px 14px rgba(79, 209, 197, 0.3);
     }
 
     h1 {
@@ -154,12 +157,13 @@
     }
 
     .btn-primary {
-      background: var(--accent);
-      color: var(--bg-primary);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(79, 209, 197, 0.3);
     }
 
     .btn-primary:hover {
-      background: var(--accent-hover);
+      box-shadow: 0 4px 12px rgba(79, 209, 197, 0.4);
     }
 
     .btn-secondary {
@@ -265,6 +269,7 @@
       background: var(--accent);
       cursor: pointer;
       transition: transform 0.15s;
+      box-shadow: 0 2px 6px rgba(79, 209, 197, 0.4);
     }
 
     input[type="range"]::-webkit-slider-thumb:hover {
@@ -318,8 +323,9 @@
     }
 
     .stat-value {
-      font-size: 2rem;
-      font-weight: 600;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent);
       line-height: 1;
       margin-bottom: 0.25rem;
       font-variant-numeric: tabular-nums;

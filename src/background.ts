@@ -129,7 +129,7 @@ async function updateBadge(): Promise<void> {
     if (stats.temptationsResisted > 0) {
       const text = stats.temptationsResisted > 99 ? '99+' : String(stats.temptationsResisted);
       await chrome.action.setBadgeText({ text });
-      await chrome.action.setBadgeBackgroundColor({ color: '#6e6e73' });
+      await chrome.action.setBadgeBackgroundColor({ color: '#4FD1C5' });
     } else {
       await chrome.action.setBadgeText({ text: '' });
     }
