@@ -5,8 +5,7 @@
   "description": "Mindful browsing with intentional friction. A 10-second pause to break the cycle of impulsive scrolling.",
   "permissions": [
     "storage",
-    "alarms",
-    "tabs"
+    "alarms"
   ],
   "background": {
     "service_worker": "background.js"
